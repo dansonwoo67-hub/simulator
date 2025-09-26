@@ -2,99 +2,139 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>EGEA Commission Simulator</title>
+  <title>EGEA Commission Simulator (only for reference)</title>
   <style>
-    body { font-family: Arial, sans-serif; margin: 20px; }
-    h1 { color: #2c3e50; }
-    h2 { color: #16a085; }
-    h3 { color: #e74c3c; }
-    .module { border: 1px solid #ccc; border-radius: 8px; padding: 15px; margin-bottom: 20px; }
-    label { display: block; margin-top: 10px; }
-    input { padding: 5px; margin-top: 5px; width: 200px; }
-    button { margin-top: 10px; padding: 6px 12px; cursor: pointer; }
-    .result { margin-top: 10px; font-weight: bold; color: #27ae60; }
-    .note { margin-top: 10px; font-style: italic; color: #d35400; font-weight: bold; }
-    table { border-collapse: collapse; margin-top: 15px; }
-    th, td { border: 1px solid #ccc; padding: 8px 12px; text-align: center; }
-    th { background: #f4f4f4; }
+    body { font-family: Arial, sans-serif; line-height: 2; }
+    h1 { color: darkblue; }
+    h2 { color: green; font-weight: bold; }
+    .result { color: green; font-weight: bold; }
+    .highlight { color: red; font-weight: bold; }
+    .hidden { display: none; }
+    input, button { margin: 5px; padding: 5px; }
   </style>
 </head>
 <body>
-  <h1>EGEA Commission Simulator (only for reference)</h1>
-  <h3>Upgrade rate should be over 20%! Jiayou! Otherwise, commission will be subject to discount.</h3>
-
-  <!-- Current Commission Module -->
-  <div class="module">
-    <h2>Current Commission Simulation</h2>
-    <label>Salary Contract (Orders): <input type="number" id="salaryOrders"></label>
-    <label>Actual Cash (USD): <input type="number" id="actualCash"></label>
-    <button onclick="calculateCurrent()">Calculate</button>
-    <div class="result" id="currentResult"></div>
+  <!-- 登录界面 -->
+  <div id="loginBox">
+    <h2>Login Required</h2>
+    <p>Username: <input type="text" id="username"></p>
+    <p>Password: <input type="password" id="password"></p>
+    <button onclick="login()">Login</button>
+    <p id="loginError" style="color:red;"></p>
   </div>
 
-  <!-- Target Commission Module -->
-  <div class="module">
-    <h2>Target Commission Simulation</h2>
-    <label>Target Orders: <input type="number" id="targetOrders"></label>
-    <button onclick="calculateTarget()">Calculate</button>
-    <div class="result" id="targetResult"></div>
-    <div class="note">💡 Reference Unit Price: 1020 USD per contract</div>
+  <!-- 主内容 -->
+  <div id="content" class="hidden">
+    <h1>EGEA Commission Simulator (only for reference)</h1>
+    <h2>Upgrade Rate should be over 20%!! Jiayou! Otherwise commission will be subject to discount.</h2>
 
-    <!-- Commission Table -->
-    <table>
-      <tr><th>Order Range</th><th>Commission Rate</th></tr>
-      <tr><td>0 – 3</td><td>0%</td></tr>
-      <tr><td>4 – 6</td><td>1%</td></tr>
-      <tr><td>7 – 9</td><td>1.5%</td></tr>
-      <tr><td>10 – 14</td><td>2%</td></tr>
-      <tr><td>15 – 19</td><td>2.5%</td></tr>
-      <tr><td>20 – 24</td><td>3%</td></tr>
-      <tr><td>25 – 29</td><td>3.5%</td></tr>
-      <tr><td>30 – 39</td><td>4%</td></tr>
-      <tr><td>40+</td><td>5%</td></tr>
-    </table>
+    <!-- Current Commission -->
+    <h2>Current Commission Simulation</h2>
+    <p>Salary Contract: <input type="number" id="salaryContract"></p>
+    <p>Actual Cash (USD): <input type="number" id="actualCash"></p>
+    <button onclick="calculateCurrent()">Calculate Current Commission</button>
+    <div id="currentResult"></div>
+
+    <!-- Target Commission -->
+    <h2>Target Commission Simulation</h2>
+    <p>225PK and above contract target: <input type="number" id="above225"></p>
+    <p>Under 150PK contract target: <input type="number" id="under150"></p>
+    <button onclick="calculateTarget()">Calculate Target Commission</button>
+    <div id="targetResult"></div>
   </div>
 
   <script>
-    // Commission calculation function
-    function calculateCommission(orders, revenueUSD) {
-      let rate = 0;
-      if (orders >= 4 && orders < 7) rate = 0.01;
-      else if (orders >= 7 && orders < 10) rate = 0.015;
-      else if (orders >= 10 && orders < 15) rate = 0.02;
-      else if (orders >= 15 && orders < 20) rate = 0.025;
-      else if (orders >= 20 && orders < 25) rate = 0.03;
-      else if (orders >= 25 && orders < 30) rate = 0.035;
-      else if (orders >= 30 && orders < 40) rate = 0.04;
-      else if (orders >= 40) rate = 0.05;
-
-      let egpRate = 48; // Exchange USD→EGP
-      let commissionEGP = revenueUSD * rate * egpRate;
-      let percent = (rate * 100).toFixed(2);
-
-      return `Orders: ${orders}, Rate: ${percent}%, Commission: ${commissionEGP.toFixed(2)} EGP`;
+    // 登录逻辑
+    function login() {
+      const user = document.getElementById("username").value;
+      const pass = document.getElementById("password").value;
+      if (user === "EGEA" && pass === "unstopable") {
+        document.getElementById("loginBox").classList.add("hidden");
+        document.getElementById("content").classList.remove("hidden");
+      } else {
+        document.getElementById("loginError").innerText = "Wrong username or password!";
+      }
     }
 
-    // Current Commission
+    // 汇率
+    const usdToEGP = 48.22;
+
+    // 提成表（示例）
+    const commissionBars = [
+      { contracts: 0, rate: 0.02 },
+      { contracts: 3, rate: 0.04 },
+      { contracts: 5, rate: 0.06 },
+      { contracts: 8, rate: 0.08 },
+      { contracts: 12, rate: 0.1 },
+      { contracts: 20, rate: 0.12 }
+    ];
+
+    function getRateByContracts(n) {
+      let rate = 0;
+      for (let i=0; i<commissionBars.length; i++) {
+        if (n >= commissionBars[i].contracts) rate = commissionBars[i].rate;
+      }
+      return rate;
+    }
+
+    function getNextThreshold(n) {
+      for (let i=0; i<commissionBars.length; i++) {
+        if (commissionBars[i].contracts > n) return commissionBars[i].contracts;
+      }
+      return null;
+    }
+
+    // Current Commission 计算
     function calculateCurrent() {
-      let orders = parseInt(document.getElementById("salaryOrders").value);
-      let cash = parseFloat(document.getElementById("actualCash").value);
-      if (isNaN(orders) || isNaN(cash)) {
-        document.getElementById("currentResult").innerText = "⚠️ Please enter valid numbers";
+      const salary = parseInt(document.getElementById("salaryContract").value);
+      const cash = parseFloat(document.getElementById("actualCash").value);
+      if (isNaN(salary) || isNaN(cash)) {
+        alert("Please enter both values");
         return;
       }
-      document.getElementById("currentResult").innerText = calculateCommission(orders, cash);
+      const avgUnit = cash / salary;
+      const rate = getRateByContracts(salary);
+
+      // upgrade coefficient
+      const com1 = cash * rate * usdToEGP;
+      const com08 = cash * rate * 0.8 * usdToEGP;
+      const com12 = cash * rate * 1.2 * usdToEGP;
+
+      // 下一档
+      const next = getNextThreshold(salary);
+      let nextMsg = "";
+      if (next) {
+        const need = next - salary;
+        const future = (cash + need*avgUnit) * getRateByContracts(next) * usdToEGP;
+        nextMsg = `<p class="result">If get ${need} more contracts, commission comes to <span class="highlight">${future.toFixed(2)} EGP</span>, JIAYOU EGEA!</p>`;
+      }
+
+      document.getElementById("currentResult").innerHTML = `
+        <p class="result">Current commission rate: <span class="highlight">${(rate*100).toFixed(2)}%</span></p>
+        <p class="result">Estimated commission = 
+          <span class="highlight">${com1.toFixed(2)} EGP</span> when coefficient=1<br>
+          <span class="highlight">${com08.toFixed(2)} EGP</span> when coefficient=0.8<br>
+          <span class="highlight">${com12.toFixed(2)} EGP</span> when coefficient=1.2
+        </p>
+        ${nextMsg}
+      `;
     }
 
     // Target Commission
     function calculateTarget() {
-      let orders = parseInt(document.getElementById("targetOrders").value);
-      if (isNaN(orders)) {
-        document.getElementById("targetResult").innerText = "⚠️ Please enter valid numbers";
-        return;
-      }
-      let revenue = orders * 1020; // 1020 USD per contract
-      document.getElementById("targetResult").innerText = calculateCommission(orders, revenue);
+      const above225 = parseInt(document.getElementById("above225").value) || 0;
+      const under150 = parseInt(document.getElementById("under150").value) || 0;
+
+      const contracts = above225 + under150;
+      const revenue = above225*1300 + under150*700;
+      const rate = getRateByContracts(contracts);
+      const commission = revenue * rate * usdToEGP;
+
+      document.getElementById("targetResult").innerHTML = `
+        <p class="result">Total contracts: <span class="highlight">${contracts}</span></p>
+        <p class="result">Commission rate: <span class="highlight">${(rate*100).toFixed(2)}%</span></p>
+        <p class="result">Estimated commission: <span class="highlight">${commission.toFixed(2)} EGP</span></p>
+      `;
     }
   </script>
 </body>
