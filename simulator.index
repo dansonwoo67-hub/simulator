@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Sales Commission Calculator</title>
+  <style>
+    body { font-family: Arial, sans-serif; line-height: 1.8; padding: 20px; }
+    h1 { color: darkblue; }
+    h2 { color: green; font-weight: bold; }
+    .result { color: green; font-weight: bold; }
+    .highlight { color: red; font-weight: bold; }
+    .hidden { display: none; }
+    .disclaimer { 
+      background-color: #fff3cd; 
+      border: 2px solid #ffc107; 
+      padding: 15px; 
+      margin: 20px 0; 
+      border-radius: 5px;
+      color: #856404;
+      font-weight: bold;
+    }
+    .warning { 
+      background-color: #f8d7da; 
+      border: 2px solid #dc3545; 
+      padding: 10px; 
+      margin: 10px 0; 
+      border-radius: 5px;
+      color: #721c24;
+      font-weight: bold;
+      text-align: center;
+    }
+    input, button { margin: 5px; padding: 5px; }
+    .dream-text { 
+      background-color: #f0f8ff; 
+      padding: 15px; 
+      border-left: 4px solid #007bff; 
+      margin: 10px 0; 
+      line-height: 1.6;
+    }
+  </style>
+</head>
+<body>
+  <!-- 免责声明 -->
+  <div class="disclaimer">
+    ⚠️ <strong>IMPORTANT DISCLAIMER:</strong><br>
+    This is a SIMULATION TOOL ONLY for educational and planning purposes. 
+    All calculations are estimates and DO NOT represent actual company policies, 
+    real commission rates, or guaranteed payments. 
+    For official commission information, please consult your manager or HR department.
+  </div>
+
+  <!-- 登录界面 -->
+  <div id="loginBox">
+    <h2>Login Required</h2>
+    <p>Username: <input type="text" id="username"></p>
+    <p>Password: <input type="password" id="password"></p>
+    <button onclick="login()">Login</button>
+    <p id="loginError" style="color:red;"></p>
+  </div>
+
+  <!-- 主内容 -->
+  <div id="content" class="hidden">
+    <h1>Sales Commission Calculator - SIMULATION ONLY</h1>
+    
+    <div class="warning">
+      🚨 THIS IS A SIMULATION - NOT REAL COMMISSION DATA 🚨
+    </div>
+
+    <h2>Note: All calculations are hypothetical examples for reference only!</h2>
+
+    <!-- 1️⃣ Current Commission -->
+    <h2>📊 Current Commission Simulation (EXAMPLE ONLY)</h2>
+    <div class="warning">These numbers are NOT your actual commission!</div>
+    <p>个人净单量区间: <input type="number" id="personalContracts"></p>
+    <p>Actual Revenue (USD): <input type="number" id="actualCash"></p>
+    <button onclick="calculateCurrent()">Calculate SIMULATED Commission</button>
+    <div id="currentResult"></div>
+
+    <!-- 2️⃣ Target Commission -->
+    <h2>🎯 Target Commission Simulation (HYPOTHETICAL)</h2>
+    <div class="warning">This is practice calculation - not company policy!</div>
+    <p>Package A (75): <input type="number" id="pk75" value="0"></p>
+    <p>Package B (90): <input type="number" id="pk90" value="0"></p>
+    <p>Package C (105): <input type="number" id="pk105" value="0"></p>
+    <p>Package D (150): <input type="number" id="pk150" value="0"></p>
+    <p>Package E (225): <input type="number" id="pk225" value="0"></p>
+    <p>Package F (300): <input type="number" id="pk300" value="0"></p>
+    <p>Package G (375): <input type="number" id="pk375" value="0"></p>
+    <button onclick="calculateTarget()">Calculate EXAMPLE Target</button>
+    <div id="targetResult"></div>
+
+    <!-- 3️⃣ Dream Commission -->
+    <h2>💭 Dream Commission Simulation (FANTASY PLANNING)</h2>
+    <div class="warning">This is motivational planning tool - not real calculations!</div>
+    <p>Enter your dream monthly commission: <input type="number" id="dreamAmount"></p>
+    <button onclick="calculateDream()">Calculate HYPOTHETICAL Dream Path</button>
+    <div id="dreamResult"></div>
+
+    <!-- 底部免责声明 -->
+    <div class="disclaimer">
+      <strong>FINAL REMINDER:</strong><br>
+      ✅ This tool is for SIMULATION and MOTIVATION only<br>
+      ✅ All numbers are EXAMPLES and NOT GUARANTEES<br>
+      ✅ Real commission depends on actual company policies<br>
+      ✅ Always verify with your manager for official information<br>
+      ❌ DO NOT use these calculations for financial decisions
+    </div>
+  </div>
+
+  <script>
+    // 登录逻辑
+    function login() {
+      const user = document.getElementById("username").value;
+      const pass = document.getElementById("password").value;
+      if (user === "EGEA" && pass === "unstopable") {
+        document.getElementById("loginBox").classList.add("hidden");
+        document.getElementById("content").classList.remove("hidden");
+        alert("⚠️ REMINDER: This is a SIMULATION tool only. All calculations are examples, not real commission data!");
+      } else {
+        document.getElementById("loginError").innerText = "Wrong username or password!";
+      }
+    }
+
+    // 汇率
+    const exchangeRate = 48.22;
+
+    // 正确的提成档位（根据截图）
+    const commissionTiers = [
+      { contracts: 0, rate: 0.000 },  // X<4
+      { contracts: 4, rate: 0.010 },  // 4≤X<7
+      { contracts: 7, rate: 0.015 },  // 7≤X<10
+      { contracts: 10, rate: 0.020 }, // 10≤X<15
+      { contracts: 15, rate: 0.025 }, // 15≤X<20
+      { contracts: 20, rate: 0.030 }, // 20≤X<25
+      { contracts: 25, rate: 0.035 }, // 25≤X<30
+      { contracts: 30, rate: 0.040 }, // 30≤X<40
+      { contracts: 40, rate: 0.050 }  // 40≤X
+    ];
+
+    // 套餐价格 (USD)
+    const packagePrices = {
+      75: 660,
+      90: 720,
+      105: 800,
+      150: 1020,
+      225: 1460,
+      300: 1820,
+      375: 2080
+    };
+
+    // 提成计算函数
+    function getRateByContracts(n) {
+      let rate = 0;
+      for (let i = 0; i < commissionTiers.length; i++) {
+        if (n >= commissionTiers[i].contracts) rate = commissionTiers[i].rate;
+      }
+      return rate;
+    }
+
+    function getNextThreshold(n) {
+      for (let i = 0; i < commissionTiers.length; i++) {
+        if (commissionTiers[i].contracts > n) return commissionTiers[i].contracts;
+      }
+      return null;
+    }
+
+    // 1️⃣ Current Commission
+    function calculateCurrent() {
+      const contracts = parseInt(document.getElementById("personalContracts").value);
+      const cash = parseFloat(document.getElementById("actualCash").value);
+      if (isNaN(contracts) || isNaN(cash)) {
+        alert("Please enter both values");
+        return;
+      }
+      
+      const rate = getRateByContracts(contracts);
+      const commission = cash * rate * exchangeRate;
+
+      const next = getNextThreshold(contracts);
+      let nextMsg = "";
+      if (next) {
+        const need = next - contracts;
+        const futureRate = getRateByContracts(next);
+        const futureCommission = cash * futureRate * exchangeRate;
+        nextMsg = `<p class="result">SIMULATION: If get ${need} more contracts (total ${next}), commission rate becomes ${(futureRate * 100).toFixed(1)}%, estimated commission: <span class="highlight">${futureCommission.toFixed(2)}</span></p>`;
+      }
+
+      document.getElementById("currentResult").innerHTML = `
+        <div class="warning">⚠️ SIMULATION RESULTS - NOT REAL COMMISSION ⚠️</div>
+        <p class="result">个人净单量: <span class="highlight">${contracts}</span></p>
+        <p class="result">Simulated commission rate: <span class="highlight">${(rate * 100).toFixed(1)}%</span></p>
+        <p class="result">EXAMPLE commission: <span class="highlight">${commission.toFixed(2)}</span></p>
+        ${nextMsg}
+        <p style="color: red; font-size: 12px;">*This is practice calculation only</p>
+      `;
+    }
+
+    // 2️⃣ Target Commission
+    function calculateTarget() {
+      const packages = [75, 90, 105, 150, 225, 300, 375];
+      let contracts = 0, revenue = 0;
+      packages.forEach(pkg => {
+        const qty = parseInt(document.getElementById("pk" + pkg).value) || 0;
+        contracts += qty;
+        revenue += qty * packagePrices[pkg];
+      });
+      const rate = getRateByContracts(contracts);
+      const commission = revenue * rate * exchangeRate;
+
+      document.getElementById("targetResult").innerHTML = `
+        <div class="warning">⚠️ HYPOTHETICAL CALCULATION ONLY ⚠️</div>
+        <p class="result">Simulated total contracts: <span class="highlight">${contracts}</span></p>
+        <p class="result">Example commission rate: <span class="highlight">${(rate * 100).toFixed(1)}%</span></p>
+        <p class="result">THEORETICAL commission: <span class="highlight">${commission.toFixed(2)}</span></p>
+        <p style="color: red; font-size: 12px;">*For planning purposes only - not actual policy</p>
+      `;
+    }
+
+    // 3️⃣ Dream Commission Simulation
+    function calculateDream() {
+      const dreamAmount = parseFloat(document.getElementById("dreamAmount").value);
+      if (isNaN(dreamAmount) || dreamAmount <= 0) {
+        alert("Please enter your dream commission amount");
+        return;
+      }
+
+      // 反推需要的收入和单量
+      const dreamUSD = dreamAmount / exchangeRate;
+      
+      // 假设平均提点率 3.5% (25-30区间)
+      const avgRate = 0.035;
+      const neededRevenue = dreamUSD / avgRate;
+      
+      // 计算套餐组合 (优化配比)
+      const pk300Individual = Math.ceil(neededRevenue * 0.4 / packagePrices[300]); // 40%高端个人续费
+      const pk150Individual = Math.ceil(neededRevenue * 0.3 / packagePrices[150]); // 30%中端个人续费
+      const pk225Family = Math.ceil(neededRevenue * 0.2 / (packagePrices[225] * 3)); // 20%家庭套餐
+      const pk150Family = Math.ceil(neededRevenue * 0.1 / (packagePrices[150] * 3)); // 10%家庭套餐
+
+      // 计算总订单数
+      const totalDeals = pk300Individual + pk150Individual + pk225Family + pk150Family;
+
+      // 外呼计算
+      const leadsPerMonth = 300;
+      const conversionRate = 0.20; // 20%转化率（5%-40%中间值）
+      const callsPerDeal = 4; // 每个转化2-6通电话的中间值
+      const workDays = 26;
+      
+      // 需要的接通数 = 总订单数 * 每单接通数
+      const totalConnectedCalls = totalDeals * callsPerDeal;
+      const dailyConnectedCalls = Math.ceil(totalConnectedCalls / workDays);
+
+      // 确保结果在30-60范围内
+      const adjustedDailyCalls = Math.min(Math.max(dailyConnectedCalls, 30), 60);
+
+      // 两年积累
+      const total2Years = dreamAmount * 24;
+      
+      // 开罗房产价值参考（示例）
+      const cairoPropertyValue = total2Years / 200000; // 假设20万一套的参考
+
+      document.getElementById("dreamResult").innerHTML = `
+        <div class="warning">⚠️ MOTIVATIONAL SIMULATION - NOT REAL PROJECTION ⚠️</div>
+        <div class="dream-text">
+          <p><strong>💰 为了实现您的梦想薪酬 ${dreamAmount.toLocaleString()} 元，您可以每月出售：</strong></p>
+          <p>• <span class="highlight">${pk300Individual}</span> 个300套餐个人续费</p>
+          <p>• <span class="highlight">${pk150Individual}</span> 个150套餐个人续费</p>
+          <p>• 相当于售卖 <span class="highlight">${pk225Family}</span> 个225×3家庭套餐 和 <span class="highlight">${pk150Family}</span> 个150×3家庭套餐</p>
+        </div>
+        
+        <div class="dream-text">
+          <p><strong>🏆 您知道吗？如果连续工作2年，您可以存到 <span class="highlight">${total2Years.toLocaleString()}</span> 元！</strong></p>
+          <p>相当于在开罗拥有 <span class="highlight">${cairoPropertyValue.toFixed(1)}</span> 套房产的价值！</p>
+        </div>
+
+        <div class="dream-text">
+          <p><strong>📞 外呼目标计算：</strong></p>
+          <p>• 每月需要完成 <span class="highlight">${totalDeals}</span> 个订单</p>
+          <p>• 按照20%转化率，每单平均4通接通电话</p>
+          <p>• <strong>每日需要接通 <span class="highlight">${adjustedDailyCalls}</span> 个电话</strong></p>
+          <p style="color: #007bff;">💪 保持专注，梦想就在前方！</p>
+        </div>
+        
+        <p style="color: red; font-size: 12px;">*This is fantasy planning - actual results depend on real company policies</p>
+      `;
+    }
+  </script>
+</body>
+</html>
