@@ -37,6 +37,11 @@
       margin: 10px 0; 
       line-height: 1.6;
     }
+    .arabic-text {
+      color: #d4af37;
+      font-weight: bold;
+      font-style: italic;
+    }
   </style>
 </head>
 <body>
@@ -71,7 +76,7 @@
     <!-- 1️⃣ Current Commission -->
     <h2>📊 Current Commission Simulation (EXAMPLE ONLY)</h2>
     <div class="warning">These numbers are NOT your actual commission!</div>
-    <p>个人净单量区间: <input type="number" id="personalContracts"></p>
+    <p>Individual Net Contract Count: <input type="number" id="personalContracts"></p>
     <p>Actual Revenue (USD): <input type="number" id="actualCash"></p>
     <button onclick="calculateCurrent()">Calculate SIMULATED Commission</button>
     <div id="currentResult"></div>
@@ -79,20 +84,20 @@
     <!-- 2️⃣ Target Commission -->
     <h2>🎯 Target Commission Simulation (HYPOTHETICAL)</h2>
     <div class="warning">This is practice calculation - not company policy!</div>
-    <p>Package A (75): <input type="number" id="pk75" value="0"></p>
-    <p>Package B (90): <input type="number" id="pk90" value="0"></p>
-    <p>Package C (105): <input type="number" id="pk105" value="0"></p>
-    <p>Package D (150): <input type="number" id="pk150" value="0"></p>
-    <p>Package E (225): <input type="number" id="pk225" value="0"></p>
-    <p>Package F (300): <input type="number" id="pk300" value="0"></p>
-    <p>Package G (375): <input type="number" id="pk375" value="0"></p>
+    <p>Package A (75 minutes): <input type="number" id="pk75" value="0"></p>
+    <p>Package B (90 minutes): <input type="number" id="pk90" value="0"></p>
+    <p>Package C (105 minutes): <input type="number" id="pk105" value="0"></p>
+    <p>Package D (150 minutes): <input type="number" id="pk150" value="0"></p>
+    <p>Package E (225 minutes): <input type="number" id="pk225" value="0"></p>
+    <p>Package F (300 minutes): <input type="number" id="pk300" value="0"></p>
+    <p>Package G (375 minutes): <input type="number" id="pk375" value="0"></p>
     <button onclick="calculateTarget()">Calculate EXAMPLE Target</button>
     <div id="targetResult"></div>
 
     <!-- 3️⃣ Dream Commission -->
     <h2>💭 Dream Commission Simulation (FANTASY PLANNING)</h2>
     <div class="warning">This is motivational planning tool - not real calculations!</div>
-    <p>Enter your dream monthly commission: <input type="number" id="dreamAmount"></p>
+    <p>Enter your dream monthly commission (EGP): <input type="number" id="dreamAmount"></p>
     <button onclick="calculateDream()">Calculate HYPOTHETICAL Dream Path</button>
     <div id="dreamResult"></div>
 
@@ -121,10 +126,10 @@
       }
     }
 
-    // 汇率
+    // Exchange Rate (USD to EGP)
     const exchangeRate = 48.22;
 
-    // 正确的提成档位（根据截图）
+    // Correct commission tiers (based on your screenshot)
     const commissionTiers = [
       { contracts: 0, rate: 0.000 },  // X<4
       { contracts: 4, rate: 0.010 },  // 4≤X<7
@@ -137,7 +142,7 @@
       { contracts: 40, rate: 0.050 }  // 40≤X
     ];
 
-    // 套餐价格 (USD)
+    // Package prices (USD)
     const packagePrices = {
       75: 660,
       90: 720,
@@ -148,7 +153,7 @@
       375: 2080
     };
 
-    // 提成计算函数
+    // Commission calculation functions
     function getRateByContracts(n) {
       let rate = 0;
       for (let i = 0; i < commissionTiers.length; i++) {
@@ -182,14 +187,14 @@
         const need = next - contracts;
         const futureRate = getRateByContracts(next);
         const futureCommission = cash * futureRate * exchangeRate;
-        nextMsg = `<p class="result">SIMULATION: If get ${need} more contracts (total ${next}), commission rate becomes ${(futureRate * 100).toFixed(1)}%, estimated commission: <span class="highlight">${futureCommission.toFixed(2)}</span></p>`;
+        nextMsg = `<p class="result">SIMULATION: If you get ${need} more contracts (total ${next}), commission rate becomes ${(futureRate * 100).toFixed(1)}%, estimated commission: <span class="highlight">${futureCommission.toFixed(2)} EGP</span></p>`;
       }
 
       document.getElementById("currentResult").innerHTML = `
         <div class="warning">⚠️ SIMULATION RESULTS - NOT REAL COMMISSION ⚠️</div>
-        <p class="result">个人净单量: <span class="highlight">${contracts}</span></p>
+        <p class="result">Individual Net Contract Count: <span class="highlight">${contracts}</span></p>
         <p class="result">Simulated commission rate: <span class="highlight">${(rate * 100).toFixed(1)}%</span></p>
-        <p class="result">EXAMPLE commission: <span class="highlight">${commission.toFixed(2)}</span></p>
+        <p class="result">EXAMPLE commission: <span class="highlight">${commission.toFixed(2)} EGP</span></p>
         ${nextMsg}
         <p style="color: red; font-size: 12px;">*This is practice calculation only</p>
       `;
@@ -211,7 +216,7 @@
         <div class="warning">⚠️ HYPOTHETICAL CALCULATION ONLY ⚠️</div>
         <p class="result">Simulated total contracts: <span class="highlight">${contracts}</span></p>
         <p class="result">Example commission rate: <span class="highlight">${(rate * 100).toFixed(1)}%</span></p>
-        <p class="result">THEORETICAL commission: <span class="highlight">${commission.toFixed(2)}</span></p>
+        <p class="result">THEORETICAL commission: <span class="highlight">${commission.toFixed(2)} EGP</span></p>
         <p style="color: red; font-size: 12px;">*For planning purposes only - not actual policy</p>
       `;
     }
@@ -224,61 +229,62 @@
         return;
       }
 
-      // 反推需要的收入和单量
+      // Calculate required revenue and package mix
       const dreamUSD = dreamAmount / exchangeRate;
       
-      // 假设平均提点率 3.5% (25-30区间)
+      // Assume average commission rate 3.5% (25-30 tier)
       const avgRate = 0.035;
       const neededRevenue = dreamUSD / avgRate;
       
-      // 计算套餐组合 (优化配比)
-      const pk300Individual = Math.ceil(neededRevenue * 0.4 / packagePrices[300]); // 40%高端个人续费
-      const pk150Individual = Math.ceil(neededRevenue * 0.3 / packagePrices[150]); // 30%中端个人续费
-      const pk225Family = Math.ceil(neededRevenue * 0.2 / (packagePrices[225] * 3)); // 20%家庭套餐
-      const pk150Family = Math.ceil(neededRevenue * 0.1 / (packagePrices[150] * 3)); // 10%家庭套餐
+      // Calculate package combination (optimized mix)
+      const pk300Individual = Math.ceil(neededRevenue * 0.4 / packagePrices[300]); // 40% high-tier individual packages
+      const pk150Individual = Math.ceil(neededRevenue * 0.3 / packagePrices[150]); // 30% mid-tier individual packages
+      const pk225Family = Math.ceil(neededRevenue * 0.2 / (packagePrices[225] * 3)); // 20% family packages
+      const pk150Family = Math.ceil(neededRevenue * 0.1 / (packagePrices[150] * 3)); // 10% family packages
 
-      // 计算总订单数
+      // Calculate total deals
       const totalDeals = pk300Individual + pk150Individual + pk225Family + pk150Family;
 
-      // 外呼计算
+      // Valid call and duration calculation
       const leadsPerMonth = 300;
-      const conversionRate = 0.20; // 20%转化率（5%-40%中间值）
-      const callsPerDeal = 4; // 每个转化2-6通电话的中间值
+      const conversionRate = 0.20; // 20% conversion rate (middle of 5%-40%)
+      const callsPerDeal = 4; // Average of 2-6 valid calls per deal
       const workDays = 26;
       
-      // 需要的接通数 = 总订单数 * 每单接通数
+      // Required connected calls = total deals * calls per deal
       const totalConnectedCalls = totalDeals * callsPerDeal;
       const dailyConnectedCalls = Math.ceil(totalConnectedCalls / workDays);
 
-      // 确保结果在30-60范围内
+      // Ensure result is within 30-60 range
       const adjustedDailyCalls = Math.min(Math.max(dailyConnectedCalls, 30), 60);
 
-      // 两年积累
+      // 2-year accumulation
       const total2Years = dreamAmount * 24;
       
-      // 开罗房产价值参考（示例）
-      const cairoPropertyValue = total2Years / 200000; // 假设20万一套的参考
+      // Cairo property value reference
+      const cairoPropertyValue = total2Years / 200000; // Assuming 200k EGP per property unit
 
       document.getElementById("dreamResult").innerHTML = `
         <div class="warning">⚠️ MOTIVATIONAL SIMULATION - NOT REAL PROJECTION ⚠️</div>
         <div class="dream-text">
-          <p><strong>💰 为了实现您的梦想薪酬 ${dreamAmount.toLocaleString()} 元，您可以每月出售：</strong></p>
-          <p>• <span class="highlight">${pk300Individual}</span> 个300套餐个人续费</p>
-          <p>• <span class="highlight">${pk150Individual}</span> 个150套餐个人续费</p>
-          <p>• 相当于售卖 <span class="highlight">${pk225Family}</span> 个225×3家庭套餐 和 <span class="highlight">${pk150Family}</span> 个150×3家庭套餐</p>
+          <p><strong>💰 To achieve your dream monthly commission of ${dreamAmount.toLocaleString()} EGP, you could sell:</strong></p>
+          <p>• <span class="highlight">${pk300Individual}</span> individual 300-minute packages (renewal)</p>
+          <p>• <span class="highlight">${pk150Individual}</span> individual 150-minute packages (renewal)</p>
+          <p>• Equivalent to <span class="highlight">${pk225Family}</span> family packages (225×3) and <span class="highlight">${pk150Family}</span> family packages (150×3)</p>
         </div>
         
         <div class="dream-text">
-          <p><strong>🏆 您知道吗？如果连续工作2年，您可以存到 <span class="highlight">${total2Years.toLocaleString()}</span> 元！</strong></p>
-          <p>相当于在开罗拥有 <span class="highlight">${cairoPropertyValue.toFixed(1)}</span> 套房产的价值！</p>
+          <p><strong>🏆 <span class="arabic-text">تعرف إيه؟</span> (Do you know what?) If you work consistently for 2 years, you could save <span class="highlight">${total2Years.toLocaleString()} EGP!</span></strong></p>
+          <p><span class="arabic-text">يا سلام!</span> That's equivalent to owning <span class="highlight">${cairoPropertyValue.toFixed(1)}</span> property units in Cairo!</p>
         </div>
 
         <div class="dream-text">
-          <p><strong>📞 外呼目标计算：</strong></p>
-          <p>• 每月需要完成 <span class="highlight">${totalDeals}</span> 个订单</p>
-          <p>• 按照20%转化率，每单平均4通接通电话</p>
-          <p>• <strong>每日需要接通 <span class="highlight">${adjustedDailyCalls}</span> 个电话</strong></p>
-          <p style="color: #007bff;">💪 保持专注，梦想就在前方！</p>
+          <p><strong>📞 Valid Call & Duration Target Analysis:</strong></p>
+          <p>• Monthly target: <span class="highlight">${totalDeals}</span> deals</p>
+          <p>• Based on 20% conversion rate, average 4 valid calls per deal</p>
+          <p>• <strong>Daily target: <span class="highlight">${adjustedDailyCalls}</span> valid calls and proper duration</strong></p>
+          <p class="arabic-text">يلا بينا! إنت قدها! <span style="color: #007bff;">(Let's go! You can do it!)</span></p>
+          <p style="color: #007bff;">💪 <span class="arabic-text">ربنا معاك</span> - Stay focused, your dreams are ahead!</p>
         </div>
         
         <p style="color: red; font-size: 12px;">*This is fantasy planning - actual results depend on real company policies</p>
