@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <title>EGEA Commission Simulator (only for reference)</title>
   <style>
-    body { font-family: Arial, sans-serif; line-height: 2; }
+    body { font-family: Arial, sans-serif; line-height: 1.8; padding: 20px; }
     h1 { color: darkblue; }
     h2 { color: green; font-weight: bold; }
     .result { color: green; font-weight: bold; }
@@ -26,21 +26,32 @@
   <!-- 主内容 -->
   <div id="content" class="hidden">
     <h1>EGEA Commission Simulator (only for reference)</h1>
-    <h2>Upgrade Rate should be over 20%!! Jiayou! Otherwise commission will be subject to discount.</h2>
+    <h2>Upgrade Rate should be over 20%! Otherwise commission will be discounted.</h2>
 
-    <!-- Current Commission -->
+    <!-- 1️⃣ Current Commission -->
     <h2>Current Commission Simulation</h2>
     <p>Salary Contract: <input type="number" id="salaryContract"></p>
     <p>Actual Cash (USD): <input type="number" id="actualCash"></p>
     <button onclick="calculateCurrent()">Calculate Current Commission</button>
     <div id="currentResult"></div>
 
-    <!-- Target Commission -->
-    <h2>Target Commission Simulation</h2>
-    <p>225PK and above contract target: <input type="number" id="above225"></p>
-    <p>Under 150PK contract target: <input type="number" id="under150"></p>
+    <!-- 2️⃣ Target Commission -->
+    <h2>Target Commission Simulation (Based on Renew Price)</h2>
+    <p>75PK: <input type="number" id="pk75" value="0"></p>
+    <p>90PK: <input type="number" id="pk90" value="0"></p>
+    <p>105PK: <input type="number" id="pk105" value="0"></p>
+    <p>150PK: <input type="number" id="pk150" value="0"></p>
+    <p>225PK: <input type="number" id="pk225" value="0"></p>
+    <p>300PK: <input type="number" id="pk300" value="0"></p>
+    <p>375PK: <input type="number" id="pk375" value="0"></p>
     <button onclick="calculateTarget()">Calculate Target Commission</button>
     <div id="targetResult"></div>
+
+    <!-- 3️⃣ Dream Commission -->
+    <h2>I WANT THIS!! Dream Commission Simulation</h2>
+    <p>Enter your dream monthly commission (EGP): <input type="number" id="dreamEGP"></p>
+    <button onclick="calculateDream()">Calculate My Dream Path</button>
+    <div id="dreamResult"></div>
   </div>
 
   <script>
@@ -59,7 +70,7 @@
     // 汇率
     const usdToEGP = 48.22;
 
-    // 提成表（示例）
+    // 提成档位
     const commissionBars = [
       { contracts: 0, rate: 0.02 },
       { contracts: 3, rate: 0.04 },
@@ -69,22 +80,34 @@
       { contracts: 20, rate: 0.12 }
     ];
 
+    // 套餐价格
+    const packagePrice = {
+      75: 660,
+      90: 720,
+      105: 800,
+      150: 1020,
+      225: 1460,
+      300: 1820,
+      375: 2080
+    };
+
+    // 提成计算函数
     function getRateByContracts(n) {
       let rate = 0;
-      for (let i=0; i<commissionBars.length; i++) {
+      for (let i = 0; i < commissionBars.length; i++) {
         if (n >= commissionBars[i].contracts) rate = commissionBars[i].rate;
       }
       return rate;
     }
 
     function getNextThreshold(n) {
-      for (let i=0; i<commissionBars.length; i++) {
+      for (let i = 0; i < commissionBars.length; i++) {
         if (commissionBars[i].contracts > n) return commissionBars[i].contracts;
       }
       return null;
     }
 
-    // Current Commission 计算
+    // 1️⃣ Current Commission
     function calculateCurrent() {
       const salary = parseInt(document.getElementById("salaryContract").value);
       const cash = parseFloat(document.getElementById("actualCash").value);
@@ -94,46 +117,97 @@
       }
       const avgUnit = cash / salary;
       const rate = getRateByContracts(salary);
-
-      // upgrade coefficient
       const com1 = cash * rate * usdToEGP;
       const com08 = cash * rate * 0.8 * usdToEGP;
       const com12 = cash * rate * 1.2 * usdToEGP;
 
-      // 下一档
       const next = getNextThreshold(salary);
       let nextMsg = "";
       if (next) {
         const need = next - salary;
-        const future = (cash + need*avgUnit) * getRateByContracts(next) * usdToEGP;
-        nextMsg = `<p class="result">If get ${need} more contracts, commission comes to <span class="highlight">${future.toFixed(2)} EGP</span>, JIAYOU EGEA!</p>`;
+        const future = (cash + need * avgUnit) * getRateByContracts(next) * usdToEGP;
+        nextMsg = `<p class="result">If get ${need} more contracts, commission comes to <span class="highlight">${future.toFixed(2)} EGP</span>. Keep going!</p>`;
       }
 
       document.getElementById("currentResult").innerHTML = `
-        <p class="result">Current commission rate: <span class="highlight">${(rate*100).toFixed(2)}%</span></p>
+        <p class="result">Current commission rate: <span class="highlight">${(rate * 100).toFixed(2)}%</span></p>
         <p class="result">Estimated commission = 
-          <span class="highlight">${com1.toFixed(2)} EGP</span> when coefficient=1<br>
-          <span class="highlight">${com08.toFixed(2)} EGP</span> when coefficient=0.8<br>
-          <span class="highlight">${com12.toFixed(2)} EGP</span> when coefficient=1.2
+          <span class="highlight">${com1.toFixed(2)} EGP</span> (coefficient=1)<br>
+          <span class="highlight">${com08.toFixed(2)} EGP</span> (coefficient=0.8)<br>
+          <span class="highlight">${com12.toFixed(2)} EGP</span> (coefficient=1.2)
         </p>
         ${nextMsg}
       `;
     }
 
-    // Target Commission
+    // 2️⃣ Target Commission
     function calculateTarget() {
-      const above225 = parseInt(document.getElementById("above225").value) || 0;
-      const under150 = parseInt(document.getElementById("under150").value) || 0;
-
-      const contracts = above225 + under150;
-      const revenue = above225*1300 + under150*700;
+      const pkList = [75, 90, 105, 150, 225, 300, 375];
+      let contracts = 0, revenue = 0;
+      pkList.forEach(pk => {
+        const qty = parseInt(document.getElementById("pk" + pk).value) || 0;
+        contracts += qty;
+        revenue += qty * packagePrice[pk];
+      });
       const rate = getRateByContracts(contracts);
       const commission = revenue * rate * usdToEGP;
 
       document.getElementById("targetResult").innerHTML = `
         <p class="result">Total contracts: <span class="highlight">${contracts}</span></p>
-        <p class="result">Commission rate: <span class="highlight">${(rate*100).toFixed(2)}%</span></p>
+        <p class="result">Commission rate: <span class="highlight">${(rate * 100).toFixed(2)}%</span></p>
         <p class="result">Estimated commission: <span class="highlight">${commission.toFixed(2)} EGP</span></p>
+      `;
+    }
+
+    // 3️⃣ Dream Commission Simulation
+    function calculateDream() {
+      const dreamEGP = parseFloat(document.getElementById("dreamEGP").value);
+      if (isNaN(dreamEGP) || dreamEGP <= 0) {
+        alert("Please enter your dream commission (EGP)");
+        return;
+      }
+
+      // 反推 USD
+      const dreamUSD = dreamEGP / usdToEGP;
+
+      // 假设平均提点率 0.08
+      const avgRate = 0.08;
+      const neededRevenue = dreamUSD / avgRate;
+
+      // 套餐配比：300PK : 150PK = 1 : 1.2
+      const unitRevenue = 1820 + 1.2 * 1020;
+      const setCount = neededRevenue / unitRevenue;
+      const pk300 = Math.round(setCount);
+      const pk150 = Math.round(setCount * 1.2);
+
+      // 家庭套餐换算
+      const family225 = Math.round(setCount * 0.5);
+      const family150 = Math.round(setCount * 0.5);
+
+      // 计算两年积累与购买力
+      const total2Years = dreamEGP * 24;
+      let purchase = "";
+      if (total2Years < 800000) purchase = "You could buy a used Toyota Yaris 🚗";
+      else if (total2Years < 2000000) purchase = "You could buy a brand-new Toyota Corolla 🚘";
+      else if (total2Years < 4000000) purchase = "That’s enough for a down payment on a small apartment in Cairo 🏠";
+      else purchase = "You could own a two-bedroom apartment in central Cairo 🏢";
+
+      // 外呼量估算逻辑
+      const avgConversion = 0.2; // 平均转化率
+      const leads = 300;
+      const totalDeals = pk300 + pk150;
+      const callsPerDeal = 4; // 平均每单4通
+      const workDays = 26;
+      const neededConnected = Math.ceil((totalDeals / (leads * avgConversion)) * callsPerDeal * 26 / workDays);
+      const dailyCalls = Math.max(30, neededConnected);
+
+      document.getElementById("dreamResult").innerHTML = `
+        <p class="result">To achieve your dream monthly commission of <span class="highlight">${dreamEGP.toFixed(0)} EGP</span>,</p>
+        <p>You need to sell around <span class="highlight">${pk300}</span> of 300PK packages and <span class="highlight">${pk150}</span> of 150PK packages.</p>
+        <p>That equals roughly <span class="highlight">${family225}</span> family 225PK×3 sets and <span class="highlight">${family150}</span> family 150PK×3 sets.</p>
+        <p>If you keep this pace for 2 years, you can save about <span class="highlight">${total2Years.toLocaleString()} EGP</span>.</p>
+        <p>${purchase}</p>
+        <p class="highlight">To reach this goal, you need at least ${dailyCalls} connected calls per day. 📞 Keep going, you’re unstoppable!</p>
       `;
     }
   </script>
