@@ -42,6 +42,20 @@
       font-weight: bold;
       font-style: italic;
     }
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      margin-top: 10px;
+    }
+    table, th, td {
+      border: 1px solid #999;
+      padding: 6px;
+      text-align: center;
+    }
+    th {
+      background-color: #007bff;
+      color: white;
+    }
   </style>
 </head>
 <body>
@@ -68,8 +82,6 @@
       🚨 THIS IS A SIMULATION - NOT REAL COMMISSION DATA 🚨
     </div>
 
-    <h2>Note: All calculations are hypothetical examples for reference only!</h2>
-
     <h2>📊 Current Commission Simulation (EXAMPLE ONLY)</h2>
     <div class="warning">These numbers are NOT your actual commission!</div>
     <p>Individual Net Contract Count: <input type="number" id="personalContracts"></p>
@@ -95,6 +107,13 @@
     <button onclick="calculateDream()">Calculate HYPOTHETICAL Dream Path</button>
     <div id="dreamResult"></div>
 
+    <!-- 4️⃣ Excel Upload Commission Calculation -->
+    <h2>📂 Batch Commission Calculation (via Excel Upload)</h2>
+    <div class="warning">Upload your Excel file with columns: EA CRM name | contract | cash-usd</div>
+    <input type="file" id="excelFile" accept=".xlsx">
+    <button onclick="processExcel()">Upload & Calculate</button>
+    <div id="excelResult"></div>
+
     <div class="disclaimer">
       <strong>FINAL REMINDER:</strong><br>
       ✅ This tool is for SIMULATION and MOTIVATION only<br>
@@ -107,7 +126,9 @@
     <p style="text-align:center; color:#888; font-size:12px;">Designed by Danson Wu · EGSS-07</p>
   </div>
 
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <script>
+    // Login
     function login() {
       const user = document.getElementById("username").value;
       const pass = document.getElementById("password").value;
@@ -170,16 +191,15 @@
         const need = next - contracts;
         const futureRate = getRateByContracts(next);
         const futureCommission = cash * futureRate * exchangeRate;
-        nextMsg = `<p class="result">SIMULATION: If you get ${need} more contracts (total ${next}), commission rate becomes ${(futureRate * 100).toFixed(1)}%, estimated commission: <span class="highlight">${futureCommission.toFixed(2)} EGP</span></p>`;
+        nextMsg = `<p class="result">SIMULATION: If you get ${need} more contracts (total ${next}), rate ${(futureRate * 100).toFixed(1)}%, estimated <span class="highlight">${futureCommission.toFixed(2)} EGP</span></p>`;
       }
 
       document.getElementById("currentResult").innerHTML = `
         <div class="warning">⚠️ SIMULATION RESULTS - NOT REAL COMMISSION ⚠️</div>
-        <p class="result">Individual Net Contract Count: <span class="highlight">${contracts}</span></p>
-        <p class="result">Simulated commission rate: <span class="highlight">${(rate * 100).toFixed(1)}%</span></p>
-        <p class="result">EXAMPLE commission: <span class="highlight">${commission.toFixed(2)} EGP</span></p>
+        <p class="result">Contracts: <span class="highlight">${contracts}</span></p>
+        <p class="result">Rate: <span class="highlight">${(rate * 100).toFixed(1)}%</span></p>
+        <p class="result">Commission: <span class="highlight">${commission.toFixed(2)} EGP</span></p>
         ${nextMsg}
-        <p style="color: red; font-size: 12px;">*This is practice calculation only</p>
       `;
     }
 
@@ -196,10 +216,9 @@
 
       document.getElementById("targetResult").innerHTML = `
         <div class="warning">⚠️ HYPOTHETICAL CALCULATION ONLY ⚠️</div>
-        <p class="result">Simulated total contracts: <span class="highlight">${contracts}</span></p>
-        <p class="result">Example commission rate: <span class="highlight">${(rate * 100).toFixed(1)}%</span></p>
-        <p class="result">THEORETICAL commission: <span class="highlight">${commission.toFixed(2)} EGP</span></p>
-        <p style="color: red; font-size: 12px;">*For planning purposes only - not actual policy</p>
+        <p class="result">Contracts: <span class="highlight">${contracts}</span></p>
+        <p class="result">Rate: <span class="highlight">${(rate * 100).toFixed(1)}%</span></p>
+        <p class="result">Commission: <span class="highlight">${commission.toFixed(2)} EGP</span></p>
       `;
     }
 
@@ -213,48 +232,50 @@
       const dreamUSD = dreamAmount / exchangeRate;
       const avgRate = 0.035;
       const neededRevenue = dreamUSD / avgRate;
-      
-      const pk300Individual = Math.ceil(neededRevenue * 0.4 / packagePrices[300]);
-      const pk150Individual = Math.ceil(neededRevenue * 0.3 / packagePrices[150]);
-      const pk225Family = Math.ceil(neededRevenue * 0.2 / (packagePrices[225] * 3));
-      const pk150Family = Math.ceil(neededRevenue * 0.1 / (packagePrices[150] * 3));
-      const totalDeals = pk300Individual + pk150Individual + pk225Family + pk150Family;
-
-      const conversionRate = 0.20;
-      const callsPerDeal = 4;
-      const workDays = 26;
-      const totalConnectedCalls = totalDeals * callsPerDeal;
-      const dailyConnectedCalls = Math.ceil(totalConnectedCalls / workDays);
-      const adjustedDailyCalls = Math.min(Math.max(dailyConnectedCalls, 30), 60);
+      const pk300 = Math.ceil(neededRevenue * 0.4 / packagePrices[300]);
+      const pk150 = Math.ceil(neededRevenue * 0.3 / packagePrices[150]);
+      const pk225F = Math.ceil(neededRevenue * 0.2 / (packagePrices[225] * 3));
+      const pk150F = Math.ceil(neededRevenue * 0.1 / (packagePrices[150] * 3));
+      const totalDeals = pk300 + pk150 + pk225F + pk150F;
+      const calls = Math.min(Math.max(Math.ceil(totalDeals * 4 / 26), 30), 60);
 
       const total2Years = dreamAmount * 24;
-      const cairoPropertyValue = total2Years / 200000;
+      const property = total2Years / 200000;
 
       document.getElementById("dreamResult").innerHTML = `
-        <div class="warning">⚠️ MOTIVATIONAL SIMULATION - NOT REAL PROJECTION ⚠️</div>
         <div class="dream-text">
-          <p><strong>💰 To achieve your dream monthly commission of ${dreamAmount.toLocaleString()} EGP, you could sell:</strong></p>
-          <p>• <span class="highlight">${pk300Individual}</span> individual 300-minute packages (renewal)</p>
-          <p>• <span class="highlight">${pk150Individual}</span> individual 150-minute packages (renewal)</p>
-          <p>• Equivalent to <span class="highlight">${pk225Family}</span> family packages (225×3) and <span class="highlight">${pk150Family}</span> family packages (150×3)</p>
-        </div>
-        
-        <div class="dream-text">
-          <p><strong>🏆 <span class="arabic-text">تعرف إيه؟</span> (Do you know what?) If you work consistently for 2 years, you could save <span class="highlight">${total2Years.toLocaleString()} EGP!</span></strong></p>
-          <p><span class="arabic-text">يا سلام!</span> That's equivalent to owning <span class="highlight">${cairoPropertyValue.toFixed(1)}</span> property units in Cairo!</p>
-        </div>
+          <p>💰 To earn ${dreamAmount.toLocaleString()} EGP/month:</p>
+          <p>• ${pk300} × 300min</p><p>• ${pk150} × 150min</p>
+          <p>• ${pk225F} × family225 | ${pk150F} × family150</p>
+          <p>Daily valid calls: <span class="highlight">${calls}</span></p>
+          <p>2 years saving = ${total2Years.toLocaleString()} EGP (~${property.toFixed(1)} Cairo flats)</p>
+        </div>`;
+    }
 
-        <div class="dream-text">
-          <p><strong>📞 Valid Call & Duration Target Analysis:</strong></p>
-          <p>• Monthly target: <span class="highlight">${totalDeals}</span> deals</p>
-          <p>• Based on 20% conversion rate, average 4 valid calls per deal</p>
-          <p>• <strong>Daily target: <span class="highlight">${adjustedDailyCalls}</span> valid calls and proper duration</strong></p>
-          <p class="arabic-text">يلا بينا! إنت قدها! <span style="color: #007bff;">(Let's go! You can do it!)</span></p>
-          <p style="color: #007bff;">💪 <span class="arabic-text">ربنا معاك</span> - Stay focused, your dreams are ahead!</p>
-        </div>
-        
-        <p style="color: red; font-size: 12px;">*This is fantasy planning - actual results depend on real company policies</p>
-      `;
+    function processExcel() {
+      const fileInput = document.getElementById('excelFile');
+      const file = fileInput.files[0];
+      if (!file) { alert("Please upload an Excel file first."); return; }
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const data = new Uint8Array(e.target.result);
+        const workbook = XLSX.read(data, { type: 'array' });
+        const sheet = workbook.Sheets[workbook.SheetNames[0]];
+        const rows = XLSX.utils.sheet_to_json(sheet);
+        let html = "<h3>📊 Batch Commission Results</h3><table><tr><th>EA Name</th><th>Contracts</th><th>Cash (USD)</th><th>Rate</th><th>Commission (EGP)</th></tr>";
+        rows.forEach(r => {
+          const n = r["EA CRM name"] || "N/A";
+          const c = Number(r["contract"]) || 0;
+          const usd = Number(r["cash-usd"]) || 0;
+          const rate = getRateByContracts(c);
+          const com = usd * rate * exchangeRate;
+          html += `<tr><td>${n}</td><td>${c}</td><td>${usd.toFixed(2)}</td><td>${(rate*100).toFixed(1)}%</td><td>${com.toLocaleString(undefined,{maximumFractionDigits:2})}</td></tr>`;
+        });
+        html += "</table>";
+        document.getElementById('excelResult').innerHTML = html;
+      };
+      reader.readAsArrayBuffer(file);
     }
   </script>
 </body>
